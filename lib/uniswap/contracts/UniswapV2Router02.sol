@@ -2,9 +2,9 @@
 pragma solidity >=0.6.6;
 
 import '../../openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../../openzeppelin/contracts/math/SafeMath.sol';
 
 import './libraries/UniswapV2Library.sol';
-import './libraries/SafeMath.sol';
 import './libraries/TransferHelper.sol';
 
 import './interfaces/IUniswapV2Factory.sol';
