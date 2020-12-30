@@ -4,7 +4,7 @@ pragma solidity ^0.6.6;
 import "https://github.com/ziwei-yang/sol_playground/blob/main/lib/uniswap/contracts/UniswapV2Router02.sol";
 import "https://github.com/ziwei-yang/sol_playground/blob/main/lib/openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import "./WETH9.sol";
+import "https://github.com/ziwei-yang/sol_playground/blob/main/lib/WETH9.sol";
 
 contract MintableToken is ERC20 {
     constructor (string memory name_, string memory symbol_) ERC20 (name_, symbol_) public {
@@ -18,7 +18,8 @@ contract MintableToken is ERC20 {
 contract Example  {
     UniswapV2Router02 public router;
     address payable public weth_addr;
-    string public debug;
+    string public debug_str;
+    uint public debug_uint;
     
     MintableToken public tokenA;
     MintableToken public tokenB;
@@ -28,17 +29,17 @@ contract Example  {
       weth_addr = payable(address(router.WETH())); // 0xc778417E063141139Fce010982780140Aa0cD5Ab
       tokenA = new MintableToken("TokenA", "TKA");
       tokenB = new MintableToken("TokenB", "TKB");
-      debug = 'init';
+      debug_str = 'init';
     }
     
     //////////////// WETH ///////////////////////////
     // Wrap ETH received into WETH and keep them
-    function depositETH() public payable {
+    function depositToWETH() public payable {
         require(msg.value > 0, "No ETH received");
         WETH9(weth_addr).deposit{value: msg.value}();
     }
     // Unwrap WETH and send them to msg sender
-    function withdrawETH() public {
+    function withdrawFromWETH() public {
         WETH9 weth = WETH9(weth_addr);
         weth.withdraw(weth.balanceOf(address(this)));
         msg.sender.transfer(address(this).balance);
@@ -47,7 +48,30 @@ contract Example  {
         require(msg.value > 0, "No ETH received");
         WETH9(weth_addr).deposit{value: msg.value}();
         WETH9 weth = WETH9(weth_addr);
-        weth.withdraw(weth.balanceOf(address(this)));
+        uint bal = weth.balanceOf(address(this));
+        // weth.withdraw(bal);
+        invoke(weth_addr, "withdraw(uint)", bal);
+        //msg.sender.transfer(address(this).balance);
+    }
+    function testWETH2() public payable {
+        require(msg.value > 0, "No ETH received");
+        WETH9(weth_addr).deposit{value: msg.value}();
+        WETH9 weth = WETH9(weth_addr);
+        uint bal = weth.balanceOf(address(this));
+        debug_uint = bal;
+        // weth.withdraw(bal);
+        invoke(weth_addr, "withdraw(uint)", bal);
+        //msg.sender.transfer(address(this).balance);
+    }
+    function testWETH3() public payable {
+        require(msg.value > 0, "No ETH received");
+        WETH9(weth_addr).deposit{value: msg.value}();
+        debug_uint = msg.value;
+        // weth.withdraw(bal);
+        invoke(weth_addr, "withdraw(uint)", msg.value);
+        //msg.sender.transfer(address(this).balance);
+    }
+    function withdrawAllETH() public {
         msg.sender.transfer(address(this).balance);
     }
     
@@ -83,7 +107,7 @@ contract Example  {
      */
     function invoke(address addr, string memory _func_desc, uint _val) public returns(bool success) {
         (bool ret,  ) = addr.call(abi.encodeWithSignature(_func_desc, _val));
-        require(ret, "Contract execution Failed");
+        require(ret, _func_desc);
         return true;
     }
 }
