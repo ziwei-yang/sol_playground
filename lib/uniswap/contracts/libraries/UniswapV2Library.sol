@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
-import '../../openzeppelin/contracts/math/SafeMath.sol';
+import '../../../openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IUniswapV2Pair.sol';
 
