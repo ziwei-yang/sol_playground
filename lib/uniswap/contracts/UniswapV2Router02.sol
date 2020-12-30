@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.6;
 
-import '/lib/openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../../openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './libraries/UniswapV2Library.sol';
 import './libraries/SafeMath.sol';
