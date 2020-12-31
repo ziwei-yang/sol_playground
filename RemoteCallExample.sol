@@ -7,6 +7,13 @@ contract RemoteCallExample {
     
     address payable weth_contract = 0xc778417E063141139Fce010982780140Aa0cD5Ab; // Ropsten WEH9
     
+    // Works
+    function wrapETH() public payable {
+        require(msg.value > 0, "No ETH received");
+        // Deposit ETH, get WETH
+        WETH9(weth_contract).deposit{value: msg.value}();
+    }
+    
     function testWETH() public payable {
         require(msg.value > 0, "No ETH received");
         // Deposit ETH, get WETH
@@ -15,7 +22,7 @@ contract RemoteCallExample {
         uint bal = weth.balanceOf(address(this));
         
         // Call WETH9.withdraw(uint) through ABI
-        invoke(weth_contract, "withdraw(uint)", bal); // Does nothing in real life?
+        invoke(weth_contract, "withdraw(uint)", bal); // Does not work.
         // weth.withdraw(bal);
         
         // Send contract all ETH back to user.
