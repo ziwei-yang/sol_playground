@@ -93,4 +93,11 @@ contract RemoteCallExample {
         }
         return x;
     }
+    
+    function bytesToAddress(bytes memory bys) private pure returns (address addr) {
+        uint size = bys.length; // Slice last 20 bits from bys tail
+        assembly {
+          addr := mload(add(bys,size))
+        } 
+    }
 }
