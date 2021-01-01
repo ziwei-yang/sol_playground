@@ -105,14 +105,16 @@ contract UniswapExample  {
                 address(tokenA), address(tokenB),
                 _tokenAQty, _tokenBQty, uint(1), uint(1),
                 address(this), (block.timestamp + 1 days)
-            )
+            ),
+            0
         );
     }
     function queryPair() public returns (bytes memory){
         return remoteCall(
             uniswap_factory_addr,
             "getPair(address,address)",
-            abi.encodeWithSignature("getPair(address,address)", address(tokenA), address(tokenB))
+            abi.encodeWithSignature("getPair(address,address)", address(tokenA), address(tokenB)),
+            0
         );
     }
     function createPair() public returns (bytes memory){
@@ -123,7 +125,8 @@ contract UniswapExample  {
         return remoteCall(
             uniswap_factory_addr,
             "createPair(address,address)",
-            abi.encodeWithSignature("createPair(address,address)", address(tokenA), address(tokenB))
+            abi.encodeWithSignature("createPair(address,address)", address(tokenA), address(tokenB)),
+            0
         );
     }
     function getReserves() public view returns (uint, uint) {
@@ -131,34 +134,63 @@ contract UniswapExample  {
         return (reserveA, reserveB);
     }
     
-    function swapTokenAforTokenB() public {
-        // TODO
-    }
-    
-    function swapTokenBforTokenA() public {
-        // TODO
+    function swapTokenAforTokenB(uint _tokenAQty) public {
+        // https://uniswap.org/docs/v2/smart-contracts/router02/#swapexacttokensfortokens
+        address[] memory path = new address [](2);
+        path[0] = address(tokenA);
+        path[1] = address(tokenB);
+        // uint[] memory amounts = UniswapV2Router02(uniswap_router_addr).swapExactTokensForTokens(
+        //     _tokenAQty, _tokenAQty,
+        //     path,
+        //     address(this), (block.timestamp + 1 days)
+        // );
+        // debug_uint = amounts[amounts.length-1];
+        bytes memory result = remoteCall(
+            uniswap_router_addr,
+            "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+            abi.encodeWithSignature(
+                "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+                _tokenAQty, _tokenAQty,
+                path,
+                address(this), (block.timestamp + 1 days)
+            ),
+            0
+        );
+        debug_bytes = result;
+        // uint[] memory amounts = abi.decode(result, (uint[]));
+        // debug_uint = amounts[amounts.length-1];
+        debug_uint = sliceUint(result, result.length-32);
     }
     
     //////////////////////// ABI Functions //////////////////////////////
-    function encodeFuncSelector(string memory _func_name) public pure returns(bytes memory) {
-        bytes memory selector = abi.encodeWithSignature(_func_name);
-        return selector;
+    // _func_desc = 'approve(address,uint256)'
+    function encodeFuncSelector(string memory _func_desc) public pure returns(bytes4) {
+        return bytes4(keccak256(bytes(_func_desc)));
     }
     /**
      * _payload = abi.encodeWithSignature("funcName(types...)", args...)
+     * _payload = abi.encodeWithSelector(0xa9059cbb, args...)
      */
-    function remoteCall(address addr, string memory memo, bytes memory _payload) public returns(bytes memory) {
+    function remoteCall(address addr, string memory memo, bytes memory _payload, uint _eth) public returns(bytes memory) {
         bytes memory payload = _payload;
-        emit RemoteCall(addr, 0, memo, payload.length, payload);
-        (bool ret, bytes memory result) = addr.call(payload);
+        emit RemoteCall(addr, _eth, memo, payload.length, payload);
+        (bool ret, bytes memory result) = addr.call{value: _eth}(payload);
         require(ret, memo);
         debug_bytes = result;
         return result;
     }
-    function bytesToAddress(bytes memory bys) private pure returns (address addr) {
+    function bytesToAddress(bytes memory bys) public pure returns (address addr) {
         uint size = bys.length; // Slice last 20 bits from bys tail
         assembly {
           addr := mload(add(bys,size))
         } 
+    }
+    function sliceUint(bytes memory bs, uint start) public pure returns (uint) {
+        require(bs.length >= start + 32, "sliceUint out of range");
+        uint x;
+        assembly {
+            x := mload(add(bs, add(0x20, start)))
+        }
+        return x;
     }
 }
